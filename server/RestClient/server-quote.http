@@ -1,0 +1,5 @@
+@host = localhost
+@port = 8085
+
+GET http://{{host}}:{{port}}/cotacao HTTP/1.1
+###

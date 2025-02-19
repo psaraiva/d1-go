@@ -1,0 +1,5 @@
+@host = localhost
+@port = 8084
+
+GET http://{{host}}:{{port}} HTTP/1.1
+###
