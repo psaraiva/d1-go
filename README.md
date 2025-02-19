@@ -8,12 +8,11 @@ Demonstrar domínio no item abaixo:
 - banco de dados
 - manipulação de arquivos
 
-# Dinâmica cliente servidor
-Crie dois arquivos:
-- `client.go`
-- `server.go`
+# Arquivos principais
+- `client/main.go`
+- `server/main.go`
 
-# CLIENT PARÂMETROS .env
+# Cliente parâmetros .env
 - `SERVER_PORT` porta do servidor
 - `QUOTE_REQUEST_DELAY` Delay da requisição de cota (api externa)
 - `QUOTE_TIMEOUT_REQUEST` Timeout da requisição de cota  (api externa)
@@ -21,7 +20,7 @@ Crie dois arquivos:
 - `DB_QUOTE_TIMEOUT` Timeout da requisição DB de cota
 - `DB_SQLITE` nome do banco de dados SQLite
 
-# SERVER PARÂMETROS
+# Server parâmetros .env
 - `SERVER_PORT` = porta do servidor
 - `QUOTE_REQUEST_DELAY` = Delay da requisição de cota (app server)
 - `QUOTE_TIMEOUT_REQUEST` = Timeout da requisição de cota (app server)
