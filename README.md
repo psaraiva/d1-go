@@ -14,6 +14,7 @@ Demonstrar domínio no item abaixo:
 
 # Cliente parâmetros .env
 - `SERVER_PORT` porta do servidor
+- `DEBUG` Auxilio para acompanhar as principais etapas
 - `QUOTE_REQUEST_DELAY` Delay da requisição de cota (api externa)
 - `QUOTE_TIMEOUT_REQUEST` Timeout da requisição de cota  (api externa)
 - `DB_QUOTE_DELAY` Delay da requisição DB de cota
@@ -22,10 +23,9 @@ Demonstrar domínio no item abaixo:
 
 # Server parâmetros .env
 - `SERVER_PORT` = porta do servidor
+- `DEBUG` Auxilio para acompanhar as principais etapas
 - `QUOTE_REQUEST_DELAY` = Delay da requisição de cota (app server)
 - `QUOTE_TIMEOUT_REQUEST` = Timeout da requisição de cota (app server)
-
-* A opção **DEBUG** está disponível nos arquivos client *main.go*, server *handler.go*.
 
 # Requisitos
 - [X] O server.go deverá consumir a API contendo o câmbio de Dólar e Real no endereço: https://economia.awesomeapi.com.br/json/last/USD-BRL e em seguida deverá retornar no formato JSON o resultado para o cliente.

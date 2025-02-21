@@ -8,13 +8,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
 )
 
 const (
-	DEBUG                             = true
 	QUOTE_API_URL                     = "http://localhost:8085/cotacao"
 	QUOTE_TIMEOUT_DEFAULT_API_REQUEST = 300
 	QUOTE_FILE                        = "cotacao.txt"
@@ -62,6 +62,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getDataApiHandler(requestContext context.Context) (*Quote, error) {
+	debug := isDebugEnable()
 	timeout, err := time.ParseDuration(os.Getenv("QUOTE_TIMEOUT_REQUEST"))
 	if err != nil {
 		timeout = QUOTE_TIMEOUT_DEFAULT_API_REQUEST * time.Millisecond
@@ -77,7 +78,7 @@ func getDataApiHandler(requestContext context.Context) (*Quote, error) {
 			delay = 0 * time.Second
 		}
 
-		if DEBUG {
+		if debug {
 			println("getDataApiHandler() #1")
 		}
 
@@ -94,14 +95,14 @@ func getDataApiHandler(requestContext context.Context) (*Quote, error) {
 			return
 		}
 
-		if DEBUG {
+		if debug {
 			println("getDataApiHandler() #2")
 		}
 
 		client := &http.Client{}
 		resp, err := client.Get(QUOTE_API_URL)
 		if err != nil {
-			if DEBUG {
+			if debug {
 				println("getDataApiHandler() #3")
 			}
 			errChan <- err
@@ -109,14 +110,14 @@ func getDataApiHandler(requestContext context.Context) (*Quote, error) {
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			if DEBUG {
+			if debug {
 				println("getDataApiHandler() #4")
 			}
 			errChan <- fmt.Errorf("error status code %v", resp.StatusCode)
 			return
 		}
 
-		if DEBUG {
+		if debug {
 			println("getDataApiHandler() #5")
 		}
 
@@ -128,27 +129,27 @@ func getDataApiHandler(requestContext context.Context) (*Quote, error) {
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			if DEBUG {
+			if debug {
 				println("getDataApiHandler() #6")
 			}
 			errChan <- err
 			return
 		}
 
-		if DEBUG {
+		if debug {
 			println("getDataApiHandler() #7")
 		}
 
 		err = json.Unmarshal([]byte(body), quote)
 		if err != nil {
-			if DEBUG {
+			if debug {
 				println("getDataApiHandler() #8")
 			}
 			errChan <- err
 			return
 		}
 
-		if DEBUG {
+		if debug {
 			println("getDataApiHandler() #9")
 		}
 		apiChan <- resp
@@ -179,20 +180,21 @@ func getDataApiHandler(requestContext context.Context) (*Quote, error) {
 }
 
 func saveQuoteTxt(quote *Quote) error {
-	if DEBUG {
+	debug := isDebugEnable()
+	if debug {
 		println("saveQuoteTxt() #1")
 	}
 
 	f, err := os.OpenFile(QUOTE_FILE, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		if DEBUG {
+		if debug {
 			println("saveQuoteTxt() #2")
 		}
 		log.Println("[Erro] ao criar/abrir o arquivo: ", err.Error())
 		return err
 	}
 
-	if DEBUG {
+	if debug {
 		println("saveQuoteTxt() #3")
 	}
 
@@ -200,16 +202,24 @@ func saveQuoteTxt(quote *Quote) error {
 	msg := fmt.Sprintf("Dólar:%s\n", quote.Bid)
 	_, err = f.WriteString(msg)
 
-	if DEBUG {
+	if debug {
 		println("saveQuoteTxt() #4")
 	}
 
 	if err != nil {
-		if DEBUG {
+		if debug {
 			println("saveQuoteTxt() #5")
 		}
 		log.Println("[Erro] ao escrever no arquivo: ", err.Error())
 		return err
 	}
 	return nil
+}
+
+func isDebugEnable() bool {
+	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
+	if err != nil {
+		debug = false
+	}
+	return debug
 }

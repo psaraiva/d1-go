@@ -1,18 +1,20 @@
-package main
+package handler
 
 import (
 	"context"
+	"d1-server/entity"
+	"d1-server/infra"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
 const (
-	DEBUG                             = true
 	QUOTE_API_URL                     = "https://economia.awesomeapi.com.br/json/last/USD-BRL"
 	QUOTE_TIMEOUT_DEFAULT_DB          = 10
 	QUOTE_TIMEOUT_DEFAULT_API_REQUEST = 200
@@ -39,7 +41,7 @@ func QuoteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	quoteBid := QuoteBid{
+	quoteBid := entity.QuoteBid{
 		Bid: quote.USDBRL.Bid,
 	}
 
@@ -54,8 +56,13 @@ func QuoteHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(jsonData))
 }
 
-func getDataApiHandler(requestContext context.Context) (*QuoteToUSDBRL, error) {
-	var quote QuoteToUSDBRL
+func getDataApiHandler(requestContext context.Context) (*entity.QuoteToUSDBRL, error) {
+	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
+	if err != nil {
+		debug = false
+	}
+
+	var quote entity.QuoteToUSDBRL
 	timeout, err := time.ParseDuration(os.Getenv("QUOTE_TIMEOUT_REQUEST"))
 	if err != nil {
 		timeout = QUOTE_TIMEOUT_DEFAULT_API_REQUEST * time.Millisecond
@@ -73,13 +80,13 @@ func getDataApiHandler(requestContext context.Context) (*QuoteToUSDBRL, error) {
 
 	apiChan := make(chan *http.Response, 1)
 	errChan := make(chan error, 1)
-	go func(quote *QuoteToUSDBRL) {
+	go func(quote *entity.QuoteToUSDBRL) {
 		delay, err := time.ParseDuration(os.Getenv("QUOTE_REQUEST_DELAY"))
 		if err != nil {
 			delay = 0 * time.Second
 		}
 
-		if DEBUG {
+		if debug {
 			log.Println("[DEBUG] getDataApiHandler! #0")
 		}
 
@@ -88,7 +95,7 @@ func getDataApiHandler(requestContext context.Context) (*QuoteToUSDBRL, error) {
 			time.Sleep(delay)
 		}
 
-		if DEBUG {
+		if debug {
 			log.Println("[DEBUG] getDataApiHandler! #1")
 		}
 
@@ -98,44 +105,44 @@ func getDataApiHandler(requestContext context.Context) (*QuoteToUSDBRL, error) {
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
-		if DEBUG {
+		if debug {
 			log.Println("[DEBUG] getDataApiHandler! #2")
 		}
 
 		if err != nil {
-			if DEBUG {
+			if debug {
 				log.Println("[DEBUG] getDataApiHandler! #3")
 			}
 			errChan <- err
 			return
 		}
 
-		if DEBUG {
+		if debug {
 			log.Println("[DEBUG] getDataApiHandler! #4")
 		}
 
 		defer resp.Body.Close()
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			if DEBUG {
+			if debug {
 				log.Println("[DEBUG] getDataApiHandler! #5")
 			}
 			errChan <- err
 			return
 		}
 
-		if DEBUG {
+		if debug {
 			log.Println("[DEBUG] getDataApiHandler! #6")
 		}
 		err = json.Unmarshal([]byte(body), quote)
 		if err != nil {
-			if DEBUG {
+			if debug {
 				log.Println("[DEBUG] getDataApiHandler! #7")
 			}
 			errChan <- err
 			return
 		}
-		if DEBUG {
+		if debug {
 			log.Println("[DEBUG] getDataApiHandler! #8")
 		}
 		apiChan <- resp
@@ -163,7 +170,7 @@ func getDataApiHandler(requestContext context.Context) (*QuoteToUSDBRL, error) {
 	}
 }
 
-func saveQuoteHandler(quote *QuoteToUSDBRL, requestContext context.Context) error {
+func saveQuoteHandler(quote *entity.QuoteToUSDBRL, requestContext context.Context) error {
 	timeout, err := time.ParseDuration(os.Getenv("DB_QUOTE_TIMEOUT"))
 	if err != nil {
 		timeout = QUOTE_TIMEOUT_DEFAULT_DB * time.Millisecond
@@ -175,7 +182,7 @@ func saveQuoteHandler(quote *QuoteToUSDBRL, requestContext context.Context) erro
 	dbChan := make(chan bool, 1)
 	errChan := make(chan error, 1)
 	go func() {
-		err = dbSaveQuote(dbCtx, quote.USDBRL)
+		err = infra.DbSaveQuote(dbCtx, quote.USDBRL)
 		if err != nil {
 			errChan <- err
 			return

@@ -1,4 +1,4 @@
-package main
+package entity
 
 type QuoteToUSDBRL struct {
 	USDBRL Quote `json:"USDBRL"`

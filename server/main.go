@@ -1,6 +1,7 @@
 package main
 
 import (
+	"d1-server/handler"
 	"log"
 	"net/http"
 	"os"
@@ -17,7 +18,7 @@ func main() {
 	port := os.Getenv("SERVER_PORT")
 	log.Print("Server starting on port " + port)
 
-	http.HandleFunc("/cotacao", QuoteHandler)
+	http.HandleFunc("/cotacao", handler.QuoteHandler)
 	err = http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		panic(err)
